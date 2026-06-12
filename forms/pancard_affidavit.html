@@ -1,0 +1,29 @@
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head"><div class="sb-logo">జన</div><div><div class="sb-title">Jana Seva Kendra</div><div class="sb-sub">PAN Card DOB Proof Affidavit</div></div></div>
+    <div class="sb-body">
+      <div class="fg"><div class="fg-title">👤 Deponent</div><div class="fg-body"><div class="fw"><label>Full Name</label><input id="i-name" oninput="live()" style="text-transform:uppercase" placeholder="FULL NAME IN CAPITALS"></div><div class="fw"><label>Father / Spouse Name</label><input id="i-rel" oninput="live()" style="text-transform:uppercase" placeholder="Father or Spouse Name"></div><div class="r2"><div class="fw"><label>Age</label><input id="i-age" type="number" oninput="live()" placeholder="35"></div><div class="fw"><label>DOB (DD/MM/YYYY)</label><input id="i-dob" oninput="live()" placeholder="01/01/1990"></div></div><div class="fw"><label>DOB in Words</label><input id="i-dobw" oninput="live()" style="text-transform:uppercase" placeholder="FIRST OF JANUARY NINETEEN NINETY"></div><div class="fw"><label>Full Address</label><textarea id="i-addr" oninput="live()" rows="2" placeholder="Full residential address..."></textarea></div></div></div>
+      <div class="fg"><div class="fg-title">✍️ Verification</div><div class="fg-body"><div class="r3"><div class="fw"><label>City</label><input id="i-city" oninput="live()" style="text-transform:uppercase" placeholder="Hyderabad"></div><div class="fw"><label>Day</label><input id="i-day" oninput="live()" placeholder="15th"></div><div class="fw"><label>Month Year</label><input id="i-mon" oninput="live()" placeholder="August 2025"></div></div></div></div>
+    </div>
+    <div class="sb-actions"><button class="btn btn-p" onclick="window.print()">🖨️ Print A4</button><div class="btn-row"><button class="btn btn-s" onclick="copyText()">📋 Copy</button><button class="btn btn-s" onclick="clearAll()">🗑️ Clear</button></div></div>
+  </aside>
+  <main class="preview"><div class="ptbar"><span>📄</span><span>PAN Card DOB Proof Affidavit</span><span class="note">Live preview → exact A4 print</span></div>
+    <div class="a4-wrap"><div class="a4" id="doc"><div class="stamp"><div class="stamp-lbl">⬆ 5.2" Non-Judicial Stamp Paper ⬆</div></div>
+        <div class="dbody"><div class="dtitle">AFFIDAVIT</div>
+          <p class="intro-p">I, <span class="b lg" id="o-name">____________________</span>, Son/Daughter/Wife of <span class="b lg" id="o-rel">____________________</span>, aged <span class="b xs" id="o-age">__</span> yrs, residing at <span class="b xl" id="o-addr">____________________________________</span>, do hereby solemnly affirm and state on oath as follows:</p>
+          <div class="clauses">
+            <div class="clause"><span class="cl-n">1.</span><span>That I am a permanent resident of the above address and a citizen of India.</span></div>
+            <div class="clause"><span class="cl-n">2.</span><span>That my correct Date of Birth is <span class="b sm" id="o-dob">__________</span> (DD/MM/YYYY) and in words: <span class="b xl" id="o-dobw">________________________________</span>.</span></div>
+            <div class="clause"><span class="cl-n">3.</span><span>That I do not possess primary documentary evidence such as Birth Certificate or Matriculation Certificate to prove my date of birth.</span></div>
+            <div class="clause"><span class="cl-n">4.</span><span>That I submit this affidavit as <strong>"Proof of Date of Birth"</strong> for obtaining a PAN Card from the Income Tax Department, Government of India.</span></div>
+            <div class="clause"><span class="cl-n">5.</span><span>The above contents are true and correct to the best of my knowledge, information and belief.</span></div>
+          </div>
+          <p style="font-weight:700;text-decoration:underline;margin:8px 0 4px;font-size:9.5pt;">VERIFICATION</p>
+          <p style="font-size:10pt;">Verified at <span class="b sm" id="o-city">__________</span> on this <span class="b sm" id="o-day">_____</span> day of <span class="b sm" id="o-mon">___________</span>. Contents of this affidavit are true and correct to the best of my knowledge.</p>
+          <div class="sig-row"><div style="font-size:9.5pt;font-weight:700;text-transform:uppercase;line-height:1.6">Sworn and signed before me<br>on this <span class="b sm" id="o-vdate">__________</span><br>at <span class="b sm" id="o-vplace">__________</span>.</div><div class="sig-block"><div style="height:28px"></div><div class="sig-line"></div><div class="sig-lbl">DEPONENT</div></div></div>
+        </div></div></div></main>
+</div>
+<script>
+var FIELDS = [{i:"i-name",o:"o-name",def:"____________________",up:true},{i:"i-rel",o:"o-rel",def:"____________________",up:true},{i:"i-age",o:"o-age",def:"__",up:false},{i:"i-dob",o:"o-dob",def:"__________",up:false},{i:"i-dobw",o:"o-dobw",def:"________________________________",up:true},{i:"i-addr",o:"o-addr",def:"____________________________________",up:false},{i:"i-city",o:"o-city",def:"__________",up:true},{i:"i-day",o:"o-day",def:"_____",up:false},{i:"i-mon",o:"o-mon",def:"___________",up:false},{i:"i-vdate",o:"o-vdate",def:"__________",up:false},{i:"i-vplace",o:"o-vplace",def:"__________",up:true}];
+function buildAddress(){}
+</script>

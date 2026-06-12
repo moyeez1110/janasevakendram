@@ -1,0 +1,31 @@
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head"><div class="sb-logo">జన</div><div><div class="sb-title">Jana Seva Kendra</div><div class="sb-sub">Character & Police Verification Affidavit</div></div></div>
+    <div class="sb-body">
+      <div class="fg"><div class="fg-title">👤 Deponent</div><div class="fg-body"><div class="fw"><label>Full Name</label><input id="i-name" oninput="live()" style="text-transform:uppercase" placeholder="BOYA MADHU"></div><div class="r3"><div class="fw"><label>Father Name</label><input id="i-father" oninput="live()" style="text-transform:uppercase" placeholder="Father Name"></div><div class="fw"><label>Age</label><input id="i-age" type="number" oninput="live()" placeholder="28"></div><div class="fw"><label>Aadhar</label><input id="i-aadhar" oninput="live()" placeholder="XXXX XXXX"></div></div><div class="fw"><label>Occupation</label><input id="i-occ" oninput="live()" style="text-transform:uppercase" placeholder="Driver"></div></div></div>
+      <div class="fg"><div class="fg-title">🏠 Address</div><div class="fg-body"><div class="r2"><div class="fw"><label>H.No.</label><input id="i-hno" oninput="live()" placeholder="4-78"></div><div class="fw"><label>Colony/Street</label><input id="i-col" oninput="live()" style="text-transform:uppercase" placeholder="Colony"></div></div><div class="r3"><div class="fw"><label>Village</label><input id="i-vill" oninput="live()" style="text-transform:uppercase" placeholder="Village"></div><div class="fw"><label>Mandal</label><input id="i-mand" oninput="live()" style="text-transform:uppercase" placeholder="Mandal"></div><div class="fw"><label>District</label><input id="i-dist" oninput="live()" style="text-transform:uppercase" placeholder="District"></div></div><div class="r2"><div class="fw"><label>State</label><input id="i-state" oninput="live()" value="Telangana" style="text-transform:uppercase"></div><div class="fw"><label>Pincode</label><input id="i-pin" oninput="live()" placeholder="500001"></div></div></div></div>
+      <div class="fg"><div class="fg-title">✍️ Execution</div><div class="fg-body"><div class="r2"><div class="fw"><label>Date</label><input id="i-vdate" oninput="live()" placeholder="DD-MM-YYYY"></div><div class="fw"><label>Place</label><input id="i-vplace" oninput="live()" style="text-transform:uppercase" placeholder="Place"></div></div></div></div>
+    </div>
+    <div class="sb-actions"><button class="btn btn-p" onclick="window.print()">🖨️ Print A4</button><div class="btn-row"><button class="btn btn-s" onclick="copyText()">📋 Copy</button><button class="btn btn-s" onclick="clearAll()">🗑️ Clear</button></div></div>
+  </aside>
+  <main class="preview"><div class="ptbar"><span>📄</span><span>Character & Police Verification Affidavit</span><span class="note">Live preview → exact A4 print</span></div>
+    <div class="a4-wrap"><div class="a4" id="doc"><div class="stamp"><div class="stamp-lbl">⬆ 5.2" Non-Judicial Stamp Paper ⬆</div></div>
+        <div class="dbody"><div class="dtitle">AFFIDAVIT</div>
+          <p class="intro-p">I, <span class="b lg" id="o-name">____________________</span>, S/o. <span class="b lg" id="o-father">____________________</span> (Aadhar: <span class="b" id="o-aadhar">________________</span>), aged <span class="b xs" id="o-age">__</span> yrs, Occ: <span class="b" id="o-occ">__________</span>, R/o. <span class="b xl" id="o-addr">____________________________________</span>, do hereby solemnly affirm and state on oath as follows:</p>
+          <div class="clauses">
+            <div class="clause"><span class="cl-n">1.</span><span>That I am the deponent herein and well acquainted with the facts of this Affidavit.</span></div>
+            <div class="clause"><span class="cl-n">2.</span><span>That I am residing in the above mentioned address since by birth / for the past several years.</span></div>
+            <div class="clause"><span class="cl-n">3.</span><span>That I state and declare that there are <strong>no civil or criminal cases or charges</strong> pending against me in any of the Police Stations anywhere in India.</span></div>
+            <div class="clause"><span class="cl-n">4.</span><span>That I am a law-abiding citizen of India and have never been convicted by any court of law.</span></div>
+            <div class="clause"><span class="cl-n">5.</span><span>The above contents are true and correct to the best of my knowledge, belief and trust.</span></div>
+          </div>
+          <div class="sig-row"><div style="font-size:9.5pt;font-weight:700;text-transform:uppercase;line-height:1.6">Sworn and signed before me<br>on this <span class="b sm" id="o-vdate">__________</span><br>at <span class="b sm" id="o-vplace">__________</span>.</div><div class="sig-block"><div style="height:28px"></div><div class="sig-line"></div><div class="sig-lbl">DEPONENT</div></div></div>
+        </div></div></div></main>
+</div>
+<script>
+var FIELDS = [{i:"i-name",o:"o-name",def:"____________________",up:true},{i:"i-father",o:"o-father",def:"____________________",up:true},{i:"i-age",o:"o-age",def:"__",up:false},{i:"i-occ",o:"o-occ",def:"__________",up:true},{i:"i-aadhar",o:"o-aadhar",def:"________________",up:false},{i:"i-vdate",o:"o-vdate",def:"__________",up:false},{i:"i-vplace",o:"o-vplace",def:"__________",up:true}];
+function buildAddress(){
+  const a=buildAddr([{id:"i-hno",pre:"H.No. "},{id:"i-col"},{id:"i-vill"},{id:"i-mand",suf:" Mandal"},{id:"i-dist",suf:" Dist."},{id:"i-state"},{id:"i-pin"}]);
+  ["o-addr"].forEach(id=>{const t=document.getElementById(id);if(t)t.textContent=a;});
+}
+</script>
