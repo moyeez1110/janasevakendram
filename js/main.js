@@ -1,14 +1,48 @@
 // 1. ఎడమవైపు ఫారమ్ ల లిస్ట్ జనరేట్ చేయడం
 const nav = document.getElementById('forms-list');
 if (nav) {
-    nav.innerHTML = "<h3>Forms List</h3>"; // హెడర్ క్లియర్ గా ఉండటానికి
+    nav.innerHTML = "<h3>Forms List</h3>";
     for (const code in window.FORM_REGISTRY) {
         const f = window.FORM_REGISTRY[code];
         nav.innerHTML += `<button onclick="loadForm('${code}')" class="nav-btn" style="display:block; width:100%; margin-bottom:6px; padding:10px; text-align:left; cursor:pointer;">${f.name}</button>`;
     }
 }
 
-// 2. యూనివర్సల్ కోర్ లోడర్ & లైవ్ సింక్ ఇంజన్
+// 2. గ్లోబల్ లైవ్ సింక్ ఫంక్షన్ (దీన్ని విడిగా బయట పెట్టడం వల్ల బ్రౌజర్ ఎర్రర్ రాకుండా రీడ్ చేస్తుంది)
+window.live = function() {
+    // ఫారమ్‌లో MAP లేదా FIELDS ఏది ఉన్నా సరే యాక్సెస్ చేస్తుంది
+    const currentFields = (typeof FIELDS !== 'undefined') ? FIELDS : ((typeof MAP !== 'undefined') ? MAP : null);
+    
+    if (currentFields) {
+        currentFields.forEach(m => {
+            const el = document.getElementById(m.i);
+            if (!el) return;
+            
+            let val = el.tagName === 'SELECT' ? el.options[el.selectedIndex].value : el.value.trim();
+            if (m.up && val) val = val.toUpperCase();
+            
+            const targets = Array.isArray(m.o) ? m.o : [m.o];
+            targets.forEach(id => {
+                const t = document.getElementById(id);
+                if (t) t.textContent = val || m.def;
+            });
+        });
+    }
+    
+    // అడ్రస్ ఆటో-బిల్డర్ కనెక్షన్ (Caste, Death, Residence అన్నింటికీ)
+    if (typeof buildAddress === 'function') {
+        buildAddress();
+    } else if (typeof buildAddr === 'function') {
+        buildAddr();
+    }
+    
+    // EWS మరియు ఇతర ఫారమ్ ల ప్రత్యేక కండిషన్స్ (Son/Daughter)
+    if (typeof extras === 'function') {
+        extras();
+    }
+};
+
+// 3. యూనివర్సల్ కోర్ లోడర్ ఇంజన్
 window.loadForm = function(code) {
     const form = window.FORM_REGISTRY[code];
     if (!form) return;
@@ -21,7 +55,7 @@ window.loadForm = function(code) {
             
             container.innerHTML = data;
 
-            // HTML లోపల ఉన్న <script> ట్యాగ్స్‌ను ఎగ్జిక్యూట్ చేయడం
+            // HTML లోపల ఉన్న <script> ట్యాగ్స్‌ను క్లీన్ గా ఎగ్జిక్యూట్ చేయడం
             const parser = new DOMParser();
             const doc = parser.parseFromString(data, 'text/html');
             const scripts = doc.querySelectorAll('script');
@@ -32,56 +66,23 @@ window.loadForm = function(code) {
                 document.body.appendChild(newScript);
             });
 
-            // లోడ్ అవ్వగానే ప్రతి ఫారమ్ యొక్క ఫీల్డ్స్ ని ఆటో-లింక్ చేయడం
+            // లోడ్ అవ్వగానే ప్రతి ఫారమ్ యొక్క డేటాను గ్లోబల్ కి బైండ్ చేయడం
             setTimeout(() => {
-                // వేరియబుల్స్ గందరగోళం లేకుండా సెట్ చేయడం (MAP లేదా FIELDS ఏది ఉన్నా ఒకేలా మార్చడం)
-                if (typeof MAP !== 'undefined') { window.FIELDS = MAP; }
-                if (typeof FIELDS !== 'undefined') { window.MAP = FIELDS; }
+                // గిట్ మరియు బ్రౌజర్ ఎర్రర్స్ రాకుండా విండో ఆబ్జెక్ట్ కి అటాచ్ చేయడం
+                if (typeof MAP !== 'undefined') { window.MAP = MAP; window.FIELDS = MAP; }
+                if (typeof FIELDS !== 'undefined') { window.FIELDS = FIELDS; window.MAP = FIELDS; }
                 
-                // సూపర్ పవర్ ఫుల్ గ్లోబల్ లైవ్ సింక్ ఫంక్షన్ (ఇది అన్ని ఫారమ్ లకూ పని చేస్తుంది)
-                window.live = function() {
-                    const currentFields = (typeof FIELDS !== 'undefined') ? FIELDS : ((typeof MAP !== 'undefined') ? MAP : null);
-                    
-                    if (currentFields) {
-                        currentFields.forEach(m => {
-                            const el = document.getElementById(m.i);
-                            if (!el) return;
-                            
-                            let val = el.tagName === 'SELECT' ? el.options[el.selectedIndex].value : el.value.trim();
-                            if (m.up && val) val = val.toUpperCase();
-                            
-                            const targets = Array.isArray(m.o) ? m.o : [m.o];
-                            targets.forEach(id => {
-                                const t = document.getElementById(id);
-                                if (t) t.textContent = val || m.def;
-                            });
-                        });
-                    }
-                    
-                    // అడ్రస్ ఆటో-బిల్డర్ కనెక్షన్ (Caste, Death, Residence అన్నింటికీ)
-                    if (typeof buildAddress === 'function') {
-                        buildAddress();
-                    } else if (typeof buildAddr === 'function') {
-                        buildAddr();
-                    }
-                    
-                    // EWS మరియు ఇరత ఫారమ్ ల ప్రత్యేక కండిషన్స్ (Son/Daughter)
-                    if (typeof extras === 'function') {
-                        extras();
-                    }
-                };
-
-                // ఇన్‌పుట్ బాక్సులన్నింటికీ లైవ్ ఈవెంట్ లిజనర్స్ యాడ్ చేయడం
+                // ఫారమ్ ఇన్‌పుట్ బాక్సులన్నింటికీ ఈవెంట్స్ లింక్ చేయడం
                 const inputs = container.querySelectorAll('input, select, textarea');
                 inputs.forEach(input => {
-                    input.addEventListener('input', window.live);
-                    input.addEventListener('change', window.live);
+                    input.oninput = window.live;
+                    input.onchange = window.live;
                 });
 
-                // ఫారమ్ ఓపెన్ అవ్వగానే డీఫాల్ట్ బ్లాంక్స్ కనిపించడానికి
-                if (typeof window.live === 'function') window.live();
+                // ఫారమ్ ఓపెన్ అవ్వగానే ఫస్ట్ టైమ్ ఖాళీ గీతలు కనిపించడానికి
+                window.live();
                 if (typeof scaleA4 === 'function') scaleA4();
-            }, 200);
+            }, 100);
         })
         .catch(err => console.error("Error loading form:", err));
 };
