@@ -1,12 +1,42 @@
 window.FORM_REGISTRY = {
-    'GAP-01': { name: 'Gap Certificate Affidavit', file: 'forms/gap_certificate.html' },
-    'CST-02': { name: 'Caste Affidavit', file: 'forms/caste_affidavit.html' },
-    'DTH-03': { name: 'Death Certificate Affidavit', file: 'forms/death_affidavit.html' },
-    'EWS-04': { name: 'EWS Income & Asset Affidavit', file: 'forms/ews_affidavit.html' },
-    'OBC-05': { name: 'OBC Non-Creamy Layer Affidavit', file: 'forms/obc_affidavit.html' },
-    'MIN-06': { name: 'Minority / Muslim Community Affidavit', file: 'forms/minority_affidavit.html' },
-    'RES-07': { name: 'Residential Certificate Affidavit', file: 'forms/residence_affidavit.html' },
-    'CHR-08': { name: 'Character & Police Verification Affidavit', file: 'forms/character_affidavit.html' },
-    'PAN-09': { name: 'PAN Card DOB Proof Affidavit', file: 'forms/pancard_affidavit.html' },
-    'BRT-10': { name: 'Late Birth Registration Affidavit', file: 'forms/late_birth_affidavit.html' }
+    "gap_certificate": {
+        "name": "Gap Certificate Affidavit",
+        "file": "forms/Gap Certificate Affidavit.html"
+    },
+    "caste_affidavit": {
+        "name": "Caste Affidavit",
+        "file": "forms/1_caste_affidavit.html"
+    },
+    "death_affidavit": {
+        "name": "Death Affidavit",
+        "file": "forms/02_death_affidavit.html"
+    },
+    "ews_affidavit": {
+        "name": "EWS Affidavit",
+        "file": "forms/03_ews_affidavit.html"
+    },
+    "obc_affidavit": {
+        "name": "OBC Affidavit",
+        "file": "forms/04_obc_affidavit.html"
+    },
+    "minority_affidavit": {
+        "name": "Minority Affidavit",
+        "file": "forms/05_minority_affidavit.html"
+    },
+    "residence_affidavit": {
+        "name": "Residence Affidavit",
+        "file": "forms/06_residence_affidavit.html"
+    },
+    "police_verification": {
+        "name": "Police Verification Affidavit",
+        "file": "forms/07_police_verification_affidavit.html"
+    },
+    "pancard_affidavit": {
+        "name": "PAN Card Affidavit",
+        "file": "forms/08_pancard_affidavit.html"
+    },
+    "late_birth_affidavit": {
+        "name": "Late Birth Certificate Affidavit",
+        "file": "forms/09_late_birth_affidavit.html"
+    }
 };
