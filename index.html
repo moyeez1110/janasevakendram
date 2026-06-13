@@ -19,7 +19,7 @@
     .login-error{background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);color:#e05252;border-radius:6px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:.7rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
     .login-error.hidden{display:none;}
     .login-label{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#7a7f95;letter-spacing:.08em;margin-bottom:6px;display:block;}
-    .login-input{width:100%;background:#0c0f18;border:1px solid #2a2f45;border-radius:8px;color:#e8e6df;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.9rem;outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:14px;}
+    .login-input{width:100%;background:#0c0f18;border:1px solid #2a2f45;border-radius:8px;color:#e8e6df;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size warmth;.9rem;outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:14px;}
     .login-input:focus{border-color:#e8b84b;box-shadow:0 0 0 3px rgba(232,184,75,.1);}
     .login-btn{width:100%;background:#e8b84b;color:#0f1117;border:none;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700;letter-spacing:.12em;cursor:pointer;transition:background .2s;margin-top:4px;}
     .login-btn:hover{background:#f0cb6a;}
@@ -47,12 +47,6 @@
     #forms-list{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:#2a2f45 transparent;}
     #forms-list::-webkit-scrollbar{width:4px;}
     #forms-list::-webkit-scrollbar-thumb{background:#2a2f45;border-radius:4px;}
-    .cat-label{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4a4f65;padding:8px 8px 4px;display:block;}
-    .form-btn{width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;color:#94a3b8;padding:8px 10px;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;margin-bottom:2px;font-family:'Inter',sans-serif;}
-    .form-btn:hover{background:#161923;border-color:#2a2f45;color:#e2e8f0;}
-    .form-btn.active{background:#1a1f30;border-color:#3a3f58;color:#e8b84b;}
-    .form-btn .cost{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#4a4f65;margin-left:auto;}
-    .form-btn.active .cost{color:#c97b2e;}
     .admin-panel{width:270px;min-width:270px;background:#0f1117;border-right:1px solid #1e2130;display:flex;flex-direction:column;overflow-y:auto;padding:14px;gap:12px;}
     .admin-panel.hidden{display:none;}
     .admin-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#e8b84b;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid #1e2130;padding-bottom:8px;}
@@ -79,7 +73,7 @@
     .popup-debit{font-family:'JetBrains Mono',monospace;font-size:1.4rem;color:#e8b84b;font-weight:700;margin:8px 0 4px;}
     .popup-after{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#7a7f95;margin-bottom:18px;}
     .popup-actions{display:flex;gap:10px;}
-    .popup-confirm{flex:1;background:#e8b84b;color:#0f1117;border:none;border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;cursor:pointer;}
+    .popup-confirm{flex:1;background:#e8b84b;color:#0f1117;border:none;border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size Ram;.72rem;font-weight:700;cursor:pointer;}
     .popup-confirm:hover{background:#f0cb6a;}
     .popup-cancel{flex:1;background:transparent;color:#7a7f95;border:1px solid #2a2f45;border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.72rem;cursor:pointer;}
     .popup-cancel:hover{color:#e05252;border-color:#e05252;}
@@ -89,26 +83,24 @@
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="auth-screen">
   <div class="login-card">
     <div class="login-glow"></div>
     <div class="login-logo">జనసేవకేంద్రం</div>
     <div class="login-title">SaaS Portal · Operator Login</div>
-    <div id="login-error" class="login-error hidden"><span>⚠</span><span id="login-error-msg">Invalid credentials</span></div>
-    <label class="login-label">OPERATOR ID</label>
+    <div id="login-error" class="login-error hidden"><span>⚠</span><span id="login-error-msg">Clearance Denied</span></div>
+    <label class="login-label">OPERATOR ID / USERNAME</label>
     <input id="login-id" class="login-input" placeholder="e.g. CSC-AP-001" oninput="this.value=this.value.toUpperCase()" onkeyup="if(event.key==='Enter')handleLogin()">
-    <label class="login-label">SECURE PIN</label>
+    <label class="login-label">SECURE 4-DIGIT PIN</label>
     <input id="login-pin" class="login-input" type="password" maxlength="4" placeholder="••••" onkeyup="if(event.key==='Enter')handleLogin()">
     <button class="login-btn" onclick="handleLogin()">⚡ INITIALIZE SESSION</button>
     <div class="login-hint">
-      మీ Operator ID మరియు PIN enter చేయండి<br>
-      Example: <span>TS-CHOUT-042</span> · PIN <span>2026</span>
+      Operator ID: <span>CSC-AP-001</span> · PIN: <span>1234</span><br>
+      Admin ID &nbsp;&nbsp;&nbsp;: <span>ADMIN</span> · PIN: <span>9999</span>
     </div>
   </div>
 </div>
 
-<!-- PRINT POPUP -->
 <div id="print-popup" class="hidden">
   <div class="popup-card">
     <div class="popup-icon">🖨️</div>
@@ -123,11 +115,10 @@
   </div>
 </div>
 
-<!-- TOPNAV -->
 <header class="topnav">
   <span class="topnav-logo">జనసేవ Pro</span>
   <span class="topnav-badge">SaaS Portal</span>
-  <div class="topnav-bc">Forms &rsaquo; <span id="breadcrumb">Select a form</span></div>
+  <div class="topnav-bc">Forms &rsaquo; <span id="breadcrumb">Select a template</span></div>
   <div class="spacer"></div>
   <div class="wallet-widget" id="wallet-widget">
     <div class="wallet-pulse"></div>
@@ -141,10 +132,7 @@
   <button class="logout-btn" onclick="handleLogout()">LOGOUT</button>
 </header>
 
-<!-- MAIN -->
 <div class="main-layout">
-
-  <!-- Forms sidebar -->
   <aside class="sidebar">
     <div class="sb-search">
       <input type="text" id="search-forms" placeholder="🔍 Search forms…" oninput="filterForms()">
@@ -152,21 +140,17 @@
     <nav id="forms-list"></nav>
   </aside>
 
-  <!-- Admin panel -->
   <div class="admin-panel hidden" id="admin-panel">
     <div class="admin-title">👑 Admin Control Hub</div>
     <div class="admin-card">
-      <div class="admin-card-lbl">Recharge Wallet</div>
-      <div class="admin-row" style="margin-bottom:6px;">
-        <input type="text" id="recharge-target-id" class="admin-input" placeholder="Operator ID (e.g. TS-CHOUT-042)" style="text-transform:uppercase;">
-      </div>
+      <div class="admin-card-lbl">Recharge Operator Wallet</div>
       <div class="admin-row">
         <input type="number" id="recharge-amt" class="admin-input" placeholder="Amount (₹)" min="1">
         <button class="admin-btn" onclick="adminRecharge()">Load</button>
       </div>
     </div>
     <div class="admin-card">
-      <div class="admin-card-lbl">Add New Form</div>
+      <div class="admin-card-lbl">Add New Form Registry</div>
       <div class="add-form-note">
         1. HTML file ని <code>forms/</code> లో పెట్టండి<br>
         2. <code>js/forms-registry.js</code> లో ఒక entry add చేయండి<br>
@@ -174,21 +158,19 @@
       </div>
     </div>
     <div class="admin-card">
-      <div class="admin-card-lbl">📋 Transaction Log</div>
-      <div id="txn-log"><div style="font-size:.68rem;color:#4a4f65;text-align:center;padding:10px;">No transactions yet.</div></div>
+      <div class="admin-card-lbl">📋 System Transaction Log</div>
+      <div id="txn-log"><div style="font-size:.68rem;color:#4a4f65;text-align:center;padding:10px;">No logs recorded.</div></div>
     </div>
   </div>
 
-  <!-- Stage -->
   <main class="stage">
     <div id="empty-state">
       <span style="font-size:3rem;">📄</span>
       <div style="font-size:.85rem;font-weight:600;color:#475569;">ఫారమ్ ఎంచుకోండి</div>
-      <div style="font-size:.72rem;color:#334155;text-align:center;max-width:260px;margin-top:4px;">Left panel నుండి ఏదైనా form select చేయండి</div>
+      <div style="font-size:.72rem;color:#334155;text-align:center;max-width:260px;margin-top:4px;">Left panel నుండి ఏదైనా ఫారమ్ ఎంచుకోండి</div>
     </div>
-    <iframe id="form-stage" class="hidden" src="about:blank" title="Form Preview"></iframe>
+    <iframe id="form-stage" class="hidden" src="about:blank" title="Form Production Stage"></iframe>
   </main>
-
 </div>
 
 <div id="saas-toast"></div>
