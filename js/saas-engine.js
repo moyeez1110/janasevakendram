@@ -1,240 +1,126 @@
 // ============================================================
-// JANA SEVA KENDRA PRO — SaaS Engine v3.0 (Supabase Edition)
-// Real auth: operators table | Real wallet: wallets table
-// Real transactions: transactions table
+// JANA SEVA KENDRA PRO — Core SaaS Engine Module v2.5
+// Features: Dynamic Iframe Injection, Cross-Frame Session Lock,
+//           Universal Dictionary Engine, Wallet Token Auditor.
 // ============================================================
 
-const SUPABASE_URL = 'https://llqqdmvptcjfaojjuwnq.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_lKowIgIVbDVC5DdqJkMUQw_ygl5vlhF';
+const CREDENTIALS = {
+  'CSC-AP-001': { pin: '1234', role: 'operator' },
+  'CSC-TS-001': { pin: '5678', role: 'operator' },
+  'ADMIN':      { pin: '9999', role: 'admin'    },
+};
 
 const SESSION_KEY = 'jsk_saas_session';
+const TXN_KEY     = 'jsk_saas_txn';
 
-// ── STATE ────────────────────────────────────────────────────
 let state = {
   isAuthenticated: false,
   role: 'operator',
   operatorId: '',
-  centerName: '',
-  balance: 0,
+  balance: 150.00,
+  transactions: [],
 };
 
-// ── SUPABASE HELPERS ─────────────────────────────────────────
-async function sbGet(table, filters = '') {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filters}`, {
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-    }
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-async function sbPatch(table, filters, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filters}`, {
-    method: 'PATCH',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-async function sbPost(table, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method: 'POST',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-// ── SESSION PERSIST ──────────────────────────────────────────
-function saveSession() {
+function saveState() {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({
     operatorId: state.operatorId,
-    centerName: state.centerName,
-    role:       state.role,
-    balance:    state.balance,
+    role:        state.role,
+    balance:     state.balance,
   }));
+  sessionStorage.setItem(TXN_KEY, JSON.stringify(state.transactions));
 }
 
-function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY);
-}
-
-// ── BOOT ─────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  const saved = sessionStorage.getItem(SESSION_KEY);
-  if (saved) {
-    try {
-      const s = JSON.parse(saved);
-      if (s && s.operatorId) {
-        state.operatorId  = s.operatorId;
-        state.centerName  = s.centerName || '';
-        state.role        = s.role || 'operator';
-        state.balance     = parseFloat(s.balance) || 0;
+function loadState() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && CREDENTIALS[s.operatorId]) {
+        state.operatorId     = s.operatorId;
+        state.role           = s.role;
+        state.balance        = parseFloat(s.balance) || 0;
         state.isAuthenticated = true;
-        // Refresh live balance from Supabase
-        await refreshBalance();
-        showPortal();
-        return;
       }
-    } catch(e) {}
-  }
+    }
+    const txnRaw = sessionStorage.getItem(TXN_KEY);
+    if (txnRaw) state.transactions = JSON.parse(txnRaw);
+  } catch(e) {}
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  if (state.isAuthenticated) showPortal();
 });
 
-// ── AUTH ─────────────────────────────────────────────────────
-window.handleLogin = async function() {
+window.handleLogin = function() {
   const id  = document.getElementById('login-id').value.trim().toUpperCase();
   const pin = document.getElementById('login-pin').value.trim();
   const err = document.getElementById('login-error');
-  const btn = document.querySelector('.login-btn');
 
-  if (!id || !pin) {
-    showLoginError('⚠️ Operator ID మరియు PIN enter చేయండి.');
+  const cred = CREDENTIALS[id];
+  if (!cred || cred.pin !== pin) {
+    err.classList.remove('hidden');
     return;
   }
 
-  btn.textContent = '⏳ Verifying…';
-  btn.disabled = true;
+  err.classList.add('hidden');
+  state.isAuthenticated = true;
+  state.operatorId = id;
+  state.role       = cred.role;
 
-  try {
-    // Lookup operator by ID + PIN
-    const rows = await sbGet('operators',
-      `operator_id=eq.${encodeURIComponent(id)}&secure_pin=eq.${encodeURIComponent(pin)}&select=operator_id,center_name,secure_pin`
-    );
-
-    if (!rows || rows.length === 0) {
-      showLoginError('🚫 Invalid Operator ID or PIN. దయచేసి మళ్ళీ ప్రయత్నించండి.');
-      btn.textContent = '⚡ INITIALIZE SESSION';
-      btn.disabled = false;
-      return;
-    }
-
-    const op = rows[0];
-    state.operatorId  = op.operator_id;
-    state.centerName  = op.center_name || '';
-    // Admin detection: if no wallet row exists or special prefix
-    state.role = op.operator_id === 'ADMIN' ? 'admin' : 'operator';
-
-    // Fetch wallet balance
-    await refreshBalance();
-
-    state.isAuthenticated = true;
-    saveSession();
-    err.classList.add('hidden');
-    showPortal();
-    showToast('⚡ Login successful — ' + state.operatorId);
-
-  } catch(e) {
-    showLoginError('🔌 Connection error: ' + e.message);
-  }
-
-  btn.textContent = '⚡ INITIALIZE SESSION';
-  btn.disabled = false;
+  if (!sessionStorage.getItem(SESSION_KEY)) state.balance = 150.00;
+  saveState();
+  showPortal();
+  showToast('⚡ Authorization Successful: ' + id);
 };
 
-function showLoginError(msg) {
-  const err = document.getElementById('login-error');
-  const msgEl = document.getElementById('login-error-msg');
-  if (msgEl) msgEl.textContent = msg;
-  else err.textContent = msg;
-  err.classList.remove('hidden');
-}
-
 window.handleLogout = function() {
-  clearSession();
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(TXN_KEY);
   state.isAuthenticated = false;
-  state.operatorId = '';
-  state.balance = 0;
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('form-stage').classList.add('hidden');
   document.getElementById('form-stage').src = 'about:blank';
   document.getElementById('empty-state').classList.remove('hidden');
   document.getElementById('login-pin').value = '';
-  document.getElementById('login-id').value = '';
 };
 
-// ── WALLET ───────────────────────────────────────────────────
-async function refreshBalance() {
-  try {
-    const rows = await sbGet('wallets',
-      `operator_id=eq.${encodeURIComponent(state.operatorId)}&select=balance`
-    );
-    if (rows && rows.length > 0) {
-      state.balance = parseFloat(rows[0].balance) || 0;
-    } else {
-      state.balance = 0;
-    }
-    saveSession();
-    updateWalletUI();
-  } catch(e) {
-    console.warn('Balance refresh failed:', e.message);
+function showPortal() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('user-display').textContent = state.operatorId;
+
+  if (state.role === 'admin') {
+    document.getElementById('admin-panel').classList.remove('hidden');
+    document.getElementById('wallet-widget').classList.add('hidden');
+  } else {
+    document.getElementById('admin-panel').classList.add('hidden');
+    document.getElementById('wallet-widget').classList.remove('hidden');
   }
+
+  updateWalletUI();
+  renderTxnLog();
+  initFormList();
 }
 
 window.updateWalletUI = function() {
   const el = document.getElementById('wallet-balance');
   if (el) {
     el.textContent = '₹' + state.balance.toFixed(2);
-    el.className = state.balance < 5
-      ? 'text-red-400 font-bold font-mono text-sm'
-      : 'text-emerald-400 font-bold font-mono text-sm';
+    el.className = state.balance < 5 ? 'text-red-400 font-bold font-mono text-sm' : 'text-emerald-400 font-bold font-mono text-sm';
   }
 };
 
-window.adminRecharge = async function() {
-  const input = document.getElementById('recharge-target-id');
-  const amtEl = document.getElementById('recharge-amt');
-  const targetId = input ? input.value.trim().toUpperCase() : state.operatorId;
-  const amt = parseFloat(amtEl.value);
-
-  if (!amt || amt <= 0) { showToast('⚠️ Valid amount enter చేయండి'); return; }
-  if (!targetId) { showToast('⚠️ Operator ID enter చేయండి'); return; }
-
-  try {
-    // Fetch current balance
-    const rows = await sbGet('wallets',
-      `operator_id=eq.${encodeURIComponent(targetId)}&select=balance,wallet_id`
-    );
-    if (!rows || rows.length === 0) {
-      showToast('🚫 Wallet not found for ' + targetId);
-      return;
-    }
-    const newBalance = parseFloat(rows[0].balance) + amt;
-    await sbPatch('wallets',
-      `operator_id=eq.${encodeURIComponent(targetId)}`,
-      { balance: newBalance, updated_at: new Date().toISOString() }
-    );
-
-    // If recharging own wallet, update local state
-    if (targetId === state.operatorId) {
-      state.balance = newBalance;
-      saveSession();
-      updateWalletUI();
-    }
-
-    amtEl.value = '';
-    if (input) input.value = '';
-    showToast('✅ ₹' + amt.toFixed(2) + ' credited to ' + targetId);
-  } catch(e) {
-    showToast('❌ Recharge failed: ' + e.message);
-  }
+window.adminRecharge = function() {
+  const input = document.getElementById('recharge-amt');
+  const amt   = parseFloat(input.value);
+  if (!amt || amt <= 0) { showToast('⚠️ Enter valid token amount'); return; }
+  state.balance += amt;
+  saveState();
+  updateWalletUI();
+  input.value = '';
+  showToast('✅ Account Credited: ₹' + amt.toFixed(2));
 };
 
-// Print request — called from injected iframe button
 window.requestPrint = function(cost, formName) {
   cost = parseFloat(cost) || 5;
   if (state.role === 'admin') {
@@ -242,7 +128,7 @@ window.requestPrint = function(cost, formName) {
     return;
   }
   if (state.balance < cost) {
-    showToast('🚫 Insufficient balance! ₹' + cost.toFixed(2) + ' required. Current: ₹' + state.balance.toFixed(2));
+    showToast('🚫 Insufficient Balance! Minimum ₹' + cost.toFixed(2) + ' required.');
     return;
   }
   document.getElementById('popup-form-name').textContent = formName || 'Affidavit';
@@ -253,41 +139,24 @@ window.requestPrint = function(cost, formName) {
   window._pendingFormName  = formName;
 };
 
-window.confirmPrint = async function() {
+window.confirmPrint = function() {
   const cost     = window._pendingPrintCost || 5;
   const formName = window._pendingFormName  || 'Affidavit';
-  const formCode = window._pendingFormCode  || 'UNKNOWN';
-
   document.getElementById('print-popup').classList.add('hidden');
 
-  try {
-    // 1. Deduct from wallet in Supabase
-    const newBalance = state.balance - cost;
-    await sbPatch('wallets',
-      `operator_id=eq.${encodeURIComponent(state.operatorId)}`,
-      { balance: newBalance, updated_at: new Date().toISOString() }
-    );
-
-    // 2. Insert transaction record
-    const txnId = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
-    await sbPost('transactions', {
-      transaction_id:   txnId,
-      operator_id:      state.operatorId,
-      form_code:        formCode,
-      amount_deducted:  cost,
-      timestamp:        new Date().toISOString(),
-    });
-
-    // 3. Update local state
-    state.balance = newBalance;
-    saveSession();
-    updateWalletUI();
-    showToast('💸 ₹' + cost.toFixed(2) + ' debited [' + txnId + ']. Printing…');
-    setTimeout(triggerIframePrint, 300);
-
-  } catch(e) {
-    showToast('❌ Transaction failed: ' + e.message);
-  }
+  state.balance -= cost;
+  const now = new Date();
+  state.transactions.unshift({
+    form:   formName,
+    amount: cost,
+    time:   now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+          + ' · ' + now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+  });
+  saveState();
+  updateWalletUI();
+  renderTxnLog();
+  showToast('💸 Token Debited. Printing Document…');
+  setTimeout(triggerIframePrint, 300);
 };
 
 window.cancelPrint = function() {
@@ -299,56 +168,22 @@ function triggerIframePrint() {
   try { stage.contentWindow.print(); } catch(e) { window.print(); }
 }
 
-// ── PORTAL INIT ──────────────────────────────────────────────
-function showPortal() {
-  document.getElementById('auth-screen').classList.add('hidden');
-  document.getElementById('user-display').textContent = state.centerName || state.operatorId;
-
-  if (state.role === 'admin') {
-    document.getElementById('admin-panel').classList.remove('hidden');
-    document.getElementById('wallet-widget').classList.add('hidden');
-  } else {
-    document.getElementById('admin-panel').classList.add('hidden');
-    document.getElementById('wallet-widget').classList.remove('hidden');
-  }
-
-  updateWalletUI();
-  loadTxnLog();
-  initFormList();
-}
-
-// ── TRANSACTION LOG (from Supabase) ─────────────────────────
-async function loadTxnLog() {
+function renderTxnLog() {
   const el = document.getElementById('txn-log');
   if (!el) return;
-  el.innerHTML = '<div style="font-size:.68rem;color:#4a4f65;text-align:center;padding:10px;">Loading…</div>';
-  try {
-    const rows = await sbGet('transactions',
-      `operator_id=eq.${encodeURIComponent(state.operatorId)}&order=timestamp.desc&limit=20&select=transaction_id,form_code,amount_deducted,timestamp`
-    );
-    if (!rows || rows.length === 0) {
-      el.innerHTML = '<div style="font-size:.68rem;color:#4a4f65;text-align:center;padding:10px;">No transactions yet.</div>';
-      return;
-    }
-    el.innerHTML = rows.map(t => {
-      const d = new Date(t.timestamp);
-      const time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
-        + ' · ' + d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-      return `<div style="display:flex;align-items:center;gap:8px;background:rgba(15,17,23,.6);border:1px solid #1e2130;border-radius:6px;padding:8px;font-size:.68rem;margin-bottom:4px;">
-        <span>🖨️</span>
-        <div style="flex:1;color:#94a3b8;">${t.form_code}<div style="color:#4a4f65;font-size:.6rem;">${time}</div></div>
-        <span style="color:#e05252;font-family:'JetBrains Mono',monospace;font-weight:700;">–₹${parseFloat(t.amount_deducted).toFixed(2)}</span>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = '<div style="font-size:.68rem;color:#e05252;padding:6px;">Failed to load: ' + e.message + '</div>';
+  if (state.transactions.length === 0) {
+    el.innerHTML = '<div class="text-xs text-slate-500 text-center py-3">No logs recorded.</div>';
+    return;
   }
+  el.innerHTML = state.transactions.slice(0, 20).map(t => `
+    <div class="flex items-center gap-2 bg-slate-950/60 rounded p-2 text-xs">
+      <span>🖨️</span>
+      <div class="flex-1 text-slate-300">${t.form}<div class="text-slate-500 text-[10px]">${t.time}</div></div>
+      <span class="text-red-400 font-bold font-mono">–₹${t.amount.toFixed(2)}</span>
+    </div>`).join('');
 }
 
-// ── FORM LIST ─────────────────────────────────────────────────
-function initFormList() {
-  renderFormList('');
-}
+function initFormList() { renderFormList(''); }
 
 window.filterForms = function() {
   const q = document.getElementById('search-forms').value.toLowerCase();
@@ -381,14 +216,9 @@ function renderFormList(query) {
   }
 }
 
-// ── LOAD FORM ─────────────────────────────────────────────────
-let _activeCode = null;
-
 window.loadForm = function(code) {
   const item = window.FORM_REGISTRY[code];
   if (!item) return;
-  _activeCode = code;
-  window._pendingFormCode = code;
 
   document.querySelectorAll('[id^="form-btn-"]').forEach(b => {
     b.classList.toggle('bg-slate-800', b.id === 'form-btn-' + code);
@@ -406,13 +236,10 @@ window.loadForm = function(code) {
   stage.onload = function() {
     try {
       injectSaaSControls(stage.contentDocument || stage.contentWindow.document, item);
-    } catch(e) {
-      console.warn('Injection skipped:', e.message);
-    }
+    } catch(e) { console.warn('Injection Error:', e.message); }
   };
 };
 
-// ── INJECTION ENGINE ──────────────────────────────────────────
 function injectSaaSControls(fDoc, formItem) {
   if (!fDoc || !fDoc.body) return;
   const docBody = fDoc.querySelector('.dbody, .a4-inner, .doc-body');
@@ -438,11 +265,10 @@ function injectSaaSControls(fDoc, formItem) {
       <span style="color:#e8b84b;font-weight:700;letter-spacing:.04em;">⚙️ JSK Controls:</span>
       <button id="jsk-lang-btn" style="background:#1a56a0;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">🌐 తెలుగు</button>
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;">
-        <input type="checkbox" id="jsk-bond-chk" style="accent-color:#e8b84b;width:13px;height:13px;">
-        📜 Bond Paper
+        <input type="checkbox" id="jsk-bond-chk" style="accent-color:#e8b84b;width:13px;height:13px;">📜 Bond Paper Mode
       </label>
       <div style="flex:1"></div>
-      <button id="jsk-print-btn" style="background:#e8b84b;color:#0f1117;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;">🖨️ Print ₹${formItem.cost}</button>
+      <button id="jsk-print-btn" style="background:#e8b84b;color:#0f1117;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;">🖨️ Print Request</button>
     `;
     docBody.insertBefore(bar, docBody.firstChild);
 
@@ -458,13 +284,34 @@ function injectSaaSControls(fDoc, formItem) {
     });
 
     let langTE = false;
+    const DICTIONARY = {
+      "AFFIDAVIT": "అఫిడవిట్", "VERIFICATION": "ధృవీకరణ", "DEPONENT": "డిపోనెంట్ సంతకం",
+      "That I am the deponent herein and as such well acquainted with the facts of this Affidavit and fit to depose as under.": "నేను ఇక్కడ డెపోనెంట్‌ని మరియు ఈ అఫిడవిట్ విషయాలు నాకు బాగా తెలుసు.",
+      "The above contents are true and correct to the best of my knowledge, belief and trust.": "పైన పేర్కొన్న విషయాలన్నీ నా జ్ఞానం, విశ్వాసం మరియు నమ్మకానికి నిజమైనవి మరియు సరైనవి.",
+      "Sworn and signed before me": "నా సమక్షంలో ప్రమాణపూర్వకంగా సంతకం చేయబడినది",
+      "NOTARY / 1ST CLASS MAGISTRATE": "నోటరీ / ఫస్ట్ క్లాస్ మెజిస్ట్రేట్"
+    };
+
     fDoc.getElementById('jsk-lang-btn').addEventListener('click', function() {
       langTE = !langTE;
-      this.textContent = langTE ? '🌐 English' : '🌐 తెలుగు';
+      this.textContent = langTE ? '🌐 English Mode' : '🌐 భాష మార్చండి (తెలుగు)';
+
       fDoc.querySelectorAll('[data-en]').forEach(el => {
         if (langTE && el.dataset.te) el.innerHTML = el.dataset.te;
         else if (!langTE && el.dataset.en) el.innerHTML = el.dataset.en;
       });
+
+      fDoc.querySelectorAll('p, span').forEach(el => {
+        if(el.children.length === 0 && DICTIONARY[el.textContent.trim()]) {
+          if(langTE) {
+            el.dataset.backup = el.textContent.trim();
+            el.textContent = DICTIONARY[el.textContent.trim()];
+          } else if(el.dataset.backup) {
+            el.textContent = el.dataset.backup;
+          }
+        }
+      });
+
       const title = fDoc.querySelector('.dtitle, #doc-title');
       if (title) {
         if (!title.dataset.en) title.dataset.en = title.textContent;
@@ -473,46 +320,31 @@ function injectSaaSControls(fDoc, formItem) {
     });
 
     fDoc.getElementById('jsk-print-btn').addEventListener('click', function() {
-      try {
-        window.parent.requestPrint(formItem.cost, formItem.name);
-      } catch(e) {
-        fDoc.defaultView.print();
-      }
-    });
-
-    fDoc.querySelectorAll('button').forEach(btn => {
-      if (btn.id === 'jsk-print-btn') return;
-      const txt = (btn.textContent || '').toLowerCase();
-      if (txt.includes('print') || txt.includes('ప్రింట్')) {
-        btn.onclick = function(e) {
-          e.preventDefault(); e.stopPropagation();
-          try { window.parent.requestPrint(formItem.cost, formItem.name); }
-          catch(ex) { fDoc.defaultView.print(); }
-        };
-      }
+      try { window.parent.requestPrint(formItem.cost, formItem.name); } catch(e) { fDoc.defaultView.print(); }
     });
   }
 
+  // ── 2. Intelligent Drag & Drop Logo Core ──
   if (!fDoc.getElementById('jsk-logo-zone')) {
     const logoWrap = fDoc.createElement('div');
     logoWrap.style.cssText = 'margin-bottom:12px;font-family:sans-serif;';
     logoWrap.innerHTML = `
       <div id="jsk-logo-zone" style="border:2px dashed #cbd5e1;padding:14px;text-align:center;background:#f8fafc;border-radius:6px;cursor:pointer;font-size:11px;color:#64748b;position:relative;transition:border-color .2s,background .2s;">
-        <div>🖼️ Drag &amp; Drop Logo / Click to Upload</div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">PNG · JPG · SVG</div>
+        <div>🖼️ Drop Organization Logo Here / Click to Upload</div>
         <input type="file" id="jsk-logo-file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
       </div>
-      <img id="jsk-logo-img" src="" alt="Logo" style="max-height:70px;max-width:220px;object-fit:contain;display:none;margin:6px auto;border-radius:4px;">
+      <img id="jsk-logo-img" src="" alt="Logo Node" style="max-height:70px;max-width:220px;object-fit:contain;display:none;margin:6px auto;border-radius:4px;">
       <div id="jsk-logo-controls" style="display:none;flex-direction:row;gap:6px;margin-top:6px;align-items:center;font-size:11px;">
         <button id="jsk-dec" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:4px;cursor:pointer;">➖ Size</button>
         <button id="jsk-inc" style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:4px;cursor:pointer;">➕ Size</button>
         <button id="jsk-del" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:5px;padding:4px 8px;cursor:pointer;">✕</button>
       </div>`;
+
     docBody.insertBefore(logoWrap, docBody.firstChild);
 
-    const zone = fDoc.getElementById('jsk-logo-zone');
-    const fileInp = fDoc.getElementById('jsk-logo-file');
-    const img = fDoc.getElementById('jsk-logo-img');
+    const zone     = fDoc.getElementById('jsk-logo-zone');
+    const fileInp  = fDoc.getElementById('jsk-logo-file');
+    const img      = fDoc.getElementById('jsk-logo-img');
     const controls = fDoc.getElementById('jsk-logo-controls');
     let logoH = 70;
 
@@ -531,20 +363,23 @@ function injectSaaSControls(fDoc, formItem) {
     }
 
     fileInp.addEventListener('change', e => mountLogo(e.target.files[0]));
-    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-    zone.addEventListener('drop',      e => { e.preventDefault(); zone.classList.remove('dragover'); mountLogo(e.dataTransfer.files[0]); });
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.style.borderColor='#e8b84b'; });
+    zone.addEventListener('dragleave', () => zone.style.borderColor='#cbd5e1');
+    zone.addEventListener('drop',      e => { e.preventDefault(); mountLogo(e.dataTransfer.files[0]); });
 
     fDoc.getElementById('jsk-inc').addEventListener('click', () => { logoH = Math.min(200, logoH + 10); img.style.maxHeight = logoH + 'px'; });
     fDoc.getElementById('jsk-dec').addEventListener('click', () => { logoH = Math.max(24, logoH - 10); img.style.maxHeight = logoH + 'px'; });
-    fDoc.getElementById('jsk-del').addEventListener('click', () => {
-      img.src = ''; img.style.display = 'none'; img.classList.remove('visible');
-      zone.style.display = ''; controls.style.display = 'none';
-    });
+    fDoc.getElementById('jsk-del').addEventListener('click', () => { img.src = ''; img.style.display = 'none'; zone.style.display = ''; controls.style.display = 'none'; });
   }
+
+  // Hook all inputs inside iframe to sync live
+  const inputs = fDoc.querySelectorAll('input, select, textarea');
+  inputs.forEach(input => {
+    input.addEventListener('input', () => { if (fDoc.defaultView.live) fDoc.defaultView.live(); });
+    input.addEventListener('change', () => { if (fDoc.defaultView.live) fDoc.defaultView.live(); });
+  });
 }
 
-// ── TOAST ────────────────────────────────────────────────────
 window.showToast = function(msg) {
   const t = document.getElementById('saas-toast');
   if (!t) return;
@@ -555,5 +390,5 @@ window.showToast = function(msg) {
   window._toastTimer = setTimeout(() => {
     t.style.opacity = '0';
     t.style.transform = 'translateX(-50%) translateY(20px)';
-  }, 3500);
+  }, 3000);
 };
