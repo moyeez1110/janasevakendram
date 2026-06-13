@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>జనసేవ కేంద్రం Pro — SaaS Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+Telugu:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;overflow:hidden;}
+    body{font-family:'Inter',sans-serif;background:#080b12;color:#e2e8f0;display:flex;flex-direction:column;}
+    #auth-screen{position:fixed;inset:0;background:rgba(4,6,12,.97);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);}
+    #auth-screen.hidden{display:none;}
+    .login-card{background:#0f1117;border:1px solid #2a2f45;border-radius:18px;width:420px;padding:40px 36px 36px;position:relative;box-shadow:0 0 80px rgba(232,184,75,.08),0 24px 60px rgba(0,0,0,.6);animation:slideUp .4s cubic-bezier(.22,1,.36,1);}
+    @keyframes slideUp{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .login-glow{position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:120px;height:2px;background:linear-gradient(90deg,transparent,#e8b84b,transparent);border-radius:2px;}
+    .login-logo{font-family:'Noto Serif Telugu',serif;font-size:2rem;color:#e8b84b;text-align:center;line-height:1;margin-bottom:4px;}
+    .login-title{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#7a7f95;text-align:center;letter-spacing:.14em;text-transform:uppercase;margin-bottom:28px;}
+    .login-error{background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);color:#e05252;border-radius:6px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:.7rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+    .login-error.hidden{display:none;}
+    .login-label{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#7a7f95;letter-spacing:.08em;margin-bottom:6px;display:block;}
+    .login-input{width:100%;background:#0c0f18;border:1px solid #2a2f45;border-radius:8px;color:#e8e6df;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.9rem;outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:14px;}
+    .login-input:focus{border-color:#e8b84b;box-shadow:0 0 0 3px rgba(232,184,75,.1);}
+    .login-btn{width:100%;background:#e8b84b;color:#0f1117;border:none;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700;letter-spacing:.12em;cursor:pointer;transition:background .2s;margin-top:4px;}
+    .login-btn:hover{background:#f0cb6a;}
+    .login-hint{text-align:center;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#4a4f65;margin-top:14px;line-height:1.8;}
+    .login-hint span{color:#e8b84b;}
+    .topnav{height:52px;background:#0f1117;border-bottom:1px solid #1e2130;display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0;z-index:50;}
+    .topnav-logo{font-family:'Noto Serif Telugu',serif;font-size:1.1rem;color:#e8b84b;font-weight:700;}
+    .topnav-badge{font-size:.62rem;font-family:'JetBrains Mono',monospace;background:rgba(232,184,75,.12);color:#e8b84b;border:1px solid rgba(232,184,75,.3);padding:2px 8px;border-radius:20px;}
+    .topnav-bc{font-size:.72rem;color:#4a4f65;font-family:'JetBrains Mono',monospace;}
+    .topnav-bc span{color:#94a3b8;}
+    .spacer{flex:1;}
+    .wallet-widget{display:flex;align-items:center;gap:8px;background:rgba(232,184,75,.06);border:1px solid rgba(232,184,75,.22);border-radius:8px;padding:5px 12px;position:relative;}
+    .wallet-pulse{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:#3ecf8e;}
+    .wallet-lbl{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:#7a7f95;letter-spacing:.08em;text-transform:uppercase;line-height:1;}
+    #wallet-balance{font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:700;color:#3ecf8e;}
+    .operator-chip{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:#7a7f95;background:#161923;border:1px solid #1e2130;border-radius:20px;padding:3px 10px;}
+    .op-dot{width:6px;height:6px;border-radius:50%;background:#3ecf8e;flex-shrink:0;}
+    .logout-btn{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#7a7f95;background:transparent;border:1px solid #1e2130;border-radius:4px;padding:2px 8px;cursor:pointer;transition:color .2s,border-color .2s;}
+    .logout-btn:hover{color:#e05252;border-color:#e05252;}
+    .main-layout{display:flex;flex:1;overflow:hidden;}
+    .sidebar{width:262px;min-width:262px;background:#0f1117;border-right:1px solid #1e2130;display:flex;flex-direction:column;overflow:hidden;}
+    .sb-search{padding:10px;border-bottom:1px solid #1e2130;flex-shrink:0;}
+    .sb-search input{width:100%;background:#0c0f18;border:1px solid #2a2f45;border-radius:6px;color:#e8e6df;padding:6px 10px;font-size:.78rem;outline:none;transition:border-color .2s;font-family:'Inter',sans-serif;}
+    .sb-search input:focus{border-color:#e8b84b;}
+    #forms-list{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:#2a2f45 transparent;}
+    #forms-list::-webkit-scrollbar{width:4px;}
+    #forms-list::-webkit-scrollbar-thumb{background:#2a2f45;border-radius:4px;}
+    .cat-label{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4a4f65;padding:8px 8px 4px;display:block;}
+    .form-btn{width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;color:#94a3b8;padding:8px 10px;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;margin-bottom:2px;font-family:'Inter',sans-serif;}
+    .form-btn:hover{background:#161923;border-color:#2a2f45;color:#e2e8f0;}
+    .form-btn.active{background:#1a1f30;border-color:#3a3f58;color:#e8b84b;}
+    .form-btn .cost{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#4a4f65;margin-left:auto;}
+    .form-btn.active .cost{color:#c97b2e;}
+    .admin-panel{width:270px;min-width:270px;background:#0f1117;border-right:1px solid #1e2130;display:flex;flex-direction:column;overflow-y:auto;padding:14px;gap:12px;}
+    .admin-panel.hidden{display:none;}
+    .admin-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#e8b84b;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid #1e2130;padding-bottom:8px;}
+    .admin-card{background:#0c0f18;border:1px solid #1e2130;border-radius:8px;padding:12px;}
+    .admin-card-lbl{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#7a7f95;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+    .admin-row{display:flex;gap:6px;}
+    .admin-input{flex:1;background:#161923;border:1px solid #2a2f45;border-radius:5px;color:#3ecf8e;padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;}
+    .admin-btn{background:#3ecf8e;color:#0f1117;border:none;border-radius:5px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;cursor:pointer;}
+    .admin-btn:hover{background:#2eba7a;}
+    .add-form-note{font-size:.68rem;color:#4a4f65;line-height:1.8;}
+    .add-form-note code{color:#e8b84b;}
+    #txn-log{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;margin-top:6px;}
+    .stage{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#0a0d14;position:relative;}
+    #empty-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#334155;}
+    #empty-state.hidden{display:none;}
+    #form-stage{flex:1;border:none;width:100%;height:100%;background:#1e293b;}
+    #form-stage.hidden{display:none;}
+    #print-popup{position:fixed;inset:0;background:rgba(4,6,12,.82);z-index:8000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+    #print-popup.hidden{display:none;}
+    .popup-card{background:#0f1117;border:1px solid #2a2f45;border-radius:16px;width:360px;padding:28px 24px;box-shadow:0 20px 50px rgba(0,0,0,.6);text-align:center;}
+    .popup-icon{font-size:2rem;margin-bottom:10px;}
+    .popup-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#7a7f95;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+    .popup-form{font-size:.9rem;color:#e8e6df;margin-bottom:4px;}
+    .popup-debit{font-family:'JetBrains Mono',monospace;font-size:1.4rem;color:#e8b84b;font-weight:700;margin:8px 0 4px;}
+    .popup-after{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#7a7f95;margin-bottom:18px;}
+    .popup-actions{display:flex;gap:10px;}
+    .popup-confirm{flex:1;background:#e8b84b;color:#0f1117;border:none;border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;cursor:pointer;}
+    .popup-confirm:hover{background:#f0cb6a;}
+    .popup-cancel{flex:1;background:transparent;color:#7a7f95;border:1px solid #2a2f45;border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.72rem;cursor:pointer;}
+    .popup-cancel:hover{color:#e05252;border-color:#e05252;}
+    #saas-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f1117;border:1px solid rgba(232,184,75,.3);color:#e8b84b;padding:8px 20px;border-radius:100px;font-size:.72rem;font-weight:600;font-family:'JetBrains Mono',monospace;box-shadow:0 4px 18px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .28s,transform .28s;z-index:9000;white-space:nowrap;}
+    @media print{.topnav,.sidebar,.admin-panel,#print-popup,#saas-toast,#auth-screen{display:none!important;}.main-layout{display:block;}.stage{overflow:visible;background:white;}#form-stage{height:auto;min-height:100vh;}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="auth-screen">
+  <div class="login-card">
+    <div class="login-glow"></div>
+    <div class="login-logo">జనసేవకేంద్రం</div>
+    <div class="login-title">SaaS Portal · Operator Login</div>
+    <div id="login-error" class="login-error hidden"><span>⚠</span><span id="login-error-msg">Invalid credentials</span></div>
+    <label class="login-label">OPERATOR ID</label>
+    <input id="login-id" class="login-input" placeholder="e.g. CSC-AP-001" oninput="this.value=this.value.toUpperCase()" onkeyup="if(event.key==='Enter')handleLogin()">
+    <label class="login-label">SECURE PIN</label>
+    <input id="login-pin" class="login-input" type="password" maxlength="4" placeholder="••••" onkeyup="if(event.key==='Enter')handleLogin()">
+    <button class="login-btn" onclick="handleLogin()">⚡ INITIALIZE SESSION</button>
+    <div class="login-hint">
+      మీ Operator ID మరియు PIN enter చేయండి<br>
+      Example: <span>TS-CHOUT-042</span> · PIN <span>2026</span>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT POPUP -->
+<div id="print-popup" class="hidden">
+  <div class="popup-card">
+    <div class="popup-icon">🖨️</div>
+    <div class="popup-title">Confirm Print Job</div>
+    <div class="popup-form" id="popup-form-name">Affidavit</div>
+    <div class="popup-debit" id="popup-cost">₹5.00</div>
+    <div class="popup-after">After deduction: <span id="popup-after">—</span></div>
+    <div class="popup-actions">
+      <button class="popup-cancel" onclick="cancelPrint()">✕ Cancel</button>
+      <button class="popup-confirm" onclick="confirmPrint()">✓ Confirm &amp; Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPNAV -->
+<header class="topnav">
+  <span class="topnav-logo">జనసేవ Pro</span>
+  <span class="topnav-badge">SaaS Portal</span>
+  <div class="topnav-bc">Forms &rsaquo; <span id="breadcrumb">Select a form</span></div>
+  <div class="spacer"></div>
+  <div class="wallet-widget" id="wallet-widget">
+    <div class="wallet-pulse"></div>
+    <span>💳</span>
+    <div>
+      <div class="wallet-lbl">Wallet</div>
+      <div id="wallet-balance">₹150.00</div>
+    </div>
+  </div>
+  <div class="operator-chip"><div class="op-dot"></div><span id="user-display">—</span></div>
+  <button class="logout-btn" onclick="handleLogout()">LOGOUT</button>
+</header>
+
+<!-- MAIN -->
+<div class="main-layout">
+
+  <!-- Forms sidebar -->
+  <aside class="sidebar">
+    <div class="sb-search">
+      <input type="text" id="search-forms" placeholder="🔍 Search forms…" oninput="filterForms()">
+    </div>
+    <nav id="forms-list"></nav>
+  </aside>
+
+  <!-- Admin panel -->
+  <div class="admin-panel hidden" id="admin-panel">
+    <div class="admin-title">👑 Admin Control Hub</div>
+    <div class="admin-card">
+      <div class="admin-card-lbl">Recharge Wallet</div>
+      <div class="admin-row" style="margin-bottom:6px;">
+        <input type="text" id="recharge-target-id" class="admin-input" placeholder="Operator ID (e.g. TS-CHOUT-042)" style="text-transform:uppercase;">
+      </div>
+      <div class="admin-row">
+        <input type="number" id="recharge-amt" class="admin-input" placeholder="Amount (₹)" min="1">
+        <button class="admin-btn" onclick="adminRecharge()">Load</button>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-card-lbl">Add New Form</div>
+      <div class="add-form-note">
+        1. HTML file ని <code>forms/</code> లో పెట్టండి<br>
+        2. <code>js/forms-registry.js</code> లో ఒక entry add చేయండి<br>
+        3. Page refresh — form automatically కనిపిస్తుంది ✅
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-card-lbl">📋 Transaction Log</div>
+      <div id="txn-log"><div style="font-size:.68rem;color:#4a4f65;text-align:center;padding:10px;">No transactions yet.</div></div>
+    </div>
+  </div>
+
+  <!-- Stage -->
+  <main class="stage">
+    <div id="empty-state">
+      <span style="font-size:3rem;">📄</span>
+      <div style="font-size:.85rem;font-weight:600;color:#475569;">ఫారమ్ ఎంచుకోండి</div>
+      <div style="font-size:.72rem;color:#334155;text-align:center;max-width:260px;margin-top:4px;">Left panel నుండి ఏదైనా form select చేయండి</div>
+    </div>
+    <iframe id="form-stage" class="hidden" src="about:blank" title="Form Preview"></iframe>
+  </main>
+
+</div>
+
+<div id="saas-toast"></div>
+
+<script src="js/forms-registry.js"></script>
+<script src="js/saas-engine.js"></script>
+</body>
+</html>
