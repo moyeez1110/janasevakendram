@@ -1,6 +1,6 @@
 // ============================================================
-// JANA SEVA KENDRA PRO — Forms Registry
-// కొత్త form add చేయాలంటే ఇక్కడ ఒక entry add చేయండి
+// JANA SEVA KENDRA PRO — Universal SaaS Forms Registry
+// కొత్త ఫారమ్ యాడ్ చేయడానికి ఇక్కడ ఒక ఎంట్రీ ఇస్తే సరిపోతుంది ✅
 // ============================================================
 window.FORM_REGISTRY = {
   "GAP-01": { name: "Gap Certificate Affidavit",         icon: "📚", category: "Education",  file: "forms/gap_certificate.html",       cost: 5 },
