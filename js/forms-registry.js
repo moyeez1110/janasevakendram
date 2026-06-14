@@ -13,4 +13,6 @@ window.FORM_REGISTRY = {
   "CHR-08": { name: "Character & Police Affidavit",      icon: "🛡️", category: "Civil",      file: "forms/character_affidavit.html",    cost: 5 },
   "PAN-09": { name: "PAN Card DOB Proof Affidavit",      icon: "💳", category: "Identity",   file: "forms/pancard_affidavit.html",      cost: 5 },
   "BRT-10": { name: "Late Birth Registration Affidavit", icon: "👶", category: "Civil",      file: "forms/late_birth_affidavit.html",   cost: 5 }
+"RES-BLD": { name: "Resume Builder", icon: "📝",
+             category: "Utilities", cost: 10 }
 };
